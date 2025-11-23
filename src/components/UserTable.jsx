@@ -1,10 +1,12 @@
 import React from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { removeUser, setEditingUser, searchUser } from "../Redux/userSlice";
+import { removeUser, setEditingUser, searchUser, setCurrentPage } from "../Redux/userSlice";
 
 function UserTable() {
   const users = useSelector((state) => state.users.users);
   const searchQuery = useSelector((state) => state.users.searchQuery);
+  const currentPage = useSelector((state) => state.users.currentPage);
+  const itemsPerPage = useSelector((state) => state.users.itemsPerPage);
 
   const dispatch = useDispatch();
 
@@ -25,6 +27,23 @@ function UserTable() {
   const filteredUsers = users.filter((user) =>
     user.nom.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredUsers.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      dispatch(setCurrentPage(currentPage + 1));
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      dispatch(setCurrentPage(currentPage - 1));
+    }
+  };
 
   return (
     <div className="container mt-4">
@@ -48,7 +67,7 @@ function UserTable() {
           </tr>
         </thead>
         <tbody>
-          {filteredUsers.map((user) => (
+          {currentItems.map((user) => (
             <tr key={user.id}>
               <td>{user.id}</td>
               <td>{user.nom}</td>
@@ -61,6 +80,23 @@ function UserTable() {
           ))}
         </tbody>
       </table>
+      <div className="d-flex justify-content-between align-items-center mt-3">
+        <button 
+          className="btn btn-secondary" 
+          onClick={handlePrevPage} 
+          disabled={currentPage === 1}
+        >
+          Précédent
+        </button>
+        <span>Page {currentPage} sur {totalPages === 0 ? 1 : totalPages}</span>
+        <button 
+          className="btn btn-secondary" 
+          onClick={handleNextPage} 
+          disabled={currentPage === totalPages || totalPages === 0}
+        >
+          Suivant
+        </button>
+      </div>
     </div>
   );
 }
